@@ -35,6 +35,7 @@
 
 #include "common/code_utils.hpp"
 #include "common/instance.hpp"
+#include "common/logging.hpp"
 #include "common/message.hpp"
 #include "net/ip6.hpp"
 #include "net/netif.hpp"
@@ -96,6 +97,7 @@ int8_t Routes::Lookup(const Address &aSource, const Address &aDestination)
     for (Route *cur = mRoutes; cur; cur = cur->mNext)
     {
         prefixMatch = cur->mPrefix.PrefixMatch(aDestination);
+otLogWarnIp6("%s: 1.x [cur->mPrefix:%s]", __func__, cur->mPrefix.ToString().AsCString());
 
         if (prefixMatch < cur->mPrefixLength)
         {
@@ -115,6 +117,7 @@ int8_t Routes::Lookup(const Address &aSource, const Address &aDestination)
         maxPrefixMatch = static_cast<int8_t>(prefixMatch);
         rval           = cur->mInterfaceId;
     }
+otLogWarnIp6("%s: 2 [maxPrefixMatch:%d, rval:%d]", __func__, maxPrefixMatch, rval);
 
     for (Netif *netif = GetIp6().GetNetifList(); netif; netif = netif->GetNext())
     {

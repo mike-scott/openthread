@@ -811,7 +811,9 @@ otError Ip6::SendRaw(Message &aMessage, int8_t aInterfaceId)
         SuccessOrExit(error = InsertMplOption(aMessage, header, messageInfo));
     }
 
+otLogWarnIp6("%s: 1 (aInterfaceId:%d)", __func__, aInterfaceId);
     error = HandleDatagram(aMessage, NULL, aInterfaceId, NULL, true);
+otLogWarnIp6("%s: 2 %d", __func__, (int)error);
     freed = true;
 
 exit:
@@ -848,6 +850,9 @@ otError Ip6::HandleDatagram(Message &   aMessage,
     messageInfo.SetInterfaceId(aInterfaceId);
     messageInfo.SetHopLimit(header.GetHopLimit());
     messageInfo.SetLinkInfo(aLinkMessageInfo);
+
+otLogWarnIp6("%s: 1.a [src:%s]", __func__, header.GetSource().ToString().AsCString());
+otLogWarnIp6("%s: 1.b [dst:%s]", __func__, header.GetDestination().ToString().AsCString());
 
     // determine destination of packet
     if (header.GetDestination().IsMulticast())
@@ -921,6 +926,7 @@ otError Ip6::HandleDatagram(Message &   aMessage,
     if (forward)
     {
         forwardInterfaceId = FindForwardInterfaceId(messageInfo);
+otLogWarnIp6("%s: 2 forwardInterfaceId:%d", __func__, forwardInterfaceId);
 
         if (forwardInterfaceId == 0)
         {
@@ -951,7 +957,9 @@ otError Ip6::HandleDatagram(Message &   aMessage,
 
             // submit aMessage to interface
             VerifyOrExit((aNetif = GetNetifById(forwardInterfaceId)) != NULL, error = OT_ERROR_NO_ROUTE);
-            SuccessOrExit(error = aNetif->SendMessage(aMessage));
+            error = aNetif->SendMessage(aMessage);
+otLogWarnIp6("%s: 3 %d", __func__, (int)error);
+            SuccessOrExit(error);
         }
     }
 
@@ -979,21 +987,32 @@ int8_t Ip6::FindForwardInterfaceId(const MessageInfo &aMessageInfo)
         // on-link link-local address
         interfaceId = aMessageInfo.mInterfaceId;
     }
-    else if ((interfaceId = GetOnLinkNetif(aMessageInfo.GetSockAddr())) > 0)
-    {
-        // on-link global address
-        ;
-    }
-    else if ((interfaceId = mRoutes.Lookup(aMessageInfo.GetPeerAddr(), aMessageInfo.GetSockAddr())) > 0)
-    {
-        // route
-        ;
-    }
     else
     {
-        interfaceId = 0;
+        interfaceId = GetOnLinkNetif(aMessageInfo.GetSockAddr());
+otLogWarnIp6("%s: 1 (on-link global) interfaceId:%d", __func__, interfaceId);
+        if (interfaceId > 0)
+        {
+            // on-link global address
+            ;
+        }
+        else
+        {
+            interfaceId = mRoutes.Lookup(aMessageInfo.GetPeerAddr(), aMessageInfo.GetSockAddr());
+otLogWarnIp6("%s: 2 (routes) interfaceId:%d", __func__, interfaceId);
+            if (interfaceId > 0)
+            {
+                // route
+                ;
+            }
+            else
+            {
+                interfaceId = 0;
+            }
+        }
     }
 
+otLogWarnIp6("%s: exit interfaceId:%d", __func__, interfaceId);
     return interfaceId;
 }
 

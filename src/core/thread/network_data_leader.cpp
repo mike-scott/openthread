@@ -240,6 +240,9 @@ otError LeaderBase::RouteLookup(const Ip6::Address &aSource,
     otError    error = OT_ERROR_NO_ROUTE;
     PrefixTlv *prefix;
 
+otLogWarnIp6("%s: 1.a [src:%s]", __func__, aSource.ToString().AsCString());
+otLogWarnIp6("%s: 1.b [dst:%s]", __func__, aDestination.ToString().AsCString());
+otLogWarnIp6("%s: 1.c [mTlvs:%p]", __func__, mTlvs);
     for (NetworkDataTlv *cur                                            = reinterpret_cast<NetworkDataTlv *>(mTlvs);
          cur < reinterpret_cast<NetworkDataTlv *>(mTlvs + mLength); cur = cur->GetNext())
     {
@@ -249,6 +252,8 @@ otError LeaderBase::RouteLookup(const Ip6::Address &aSource,
         }
 
         prefix = static_cast<PrefixTlv *>(cur);
+otLogWarnIp6("%s: 2.x prefix:%1x%1x%1x%1x", __func__, prefix->GetPrefix()[0], prefix->GetPrefix()[1], prefix->GetPrefix()[2], prefix->GetPrefix()[3]);
+otLogWarnIp6("%s: 2.x sourc:%1x%1x%1x%1x", __func__, aSource.mFields.m8[0], aSource.mFields.m8[1], aSource.mFields.m8[2], aSource.mFields.m8[3]);
 
         if (PrefixMatch(prefix->GetPrefix(), aSource.mFields.m8, prefix->GetPrefixLength()) >= 0)
         {
